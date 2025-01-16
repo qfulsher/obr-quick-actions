@@ -1,0 +1,23 @@
+<h1>Quick Actions</h1>
+
+<article *ngFor="let action of actions">
+  <h2>{{action.name}}</h2>
+  <p>To Hit: {{action.toHit}}</p>
+  <p>Damage: {{action.damage}}</p>
+  <button>Delete</button>
+</article>
+
+<details>
+  <summary>Add New Action</summary>
+
+  <form (ngSubmit)="makeNewAction()" #form [formGroup]="newActionForm">
+    <input formControlName="name" placeholder="Action Name" autocomplete="off" type="text" name="name" id="name"
+      [attr.aria-invalid]="newActionForm.pristine ? null : nameInvalid()">
+    <input formControlName="toHit" placeholder="To Hit Roll" autocomplete="off" type="text" name="toHitRoll" id="toHitRoll"
+      [attr.aria-invalid]="newActionForm.pristine ? null : toHitInvalid()">
+    <input formControlName="damage" placeholder="Damage Roll" autocomplete="off" type="text" name="damageRoll" id="damageRoll"
+      [attr.aria-invalid]="newActionForm.pristine ? null : damageInvalid()">
+    <button [disabled]="newActionForm.invalid" type="submit">Submit</button>
+</form>
+</details>
+
