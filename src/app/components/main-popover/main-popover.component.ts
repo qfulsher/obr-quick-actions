@@ -1,7 +1,7 @@
 import { Component, OnDestroy, OnInit, signal } from '@angular/core';
-import { RandomService } from '../../utils/random.service';
+import { DrollService } from '../../utils/droll.service';
 import { CommonModule } from '@angular/common';
-import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
 const ID = "com.obr-quick-actions";
@@ -22,12 +22,12 @@ export class MainPopoverComponent implements OnInit, OnDestroy {
 
   subscriptions: Subscription[] = [];
   
-  constructor(private randomService: RandomService) {
+  constructor(private drollService: DrollService) {
     this.newActionForm = new FormGroup({
       name: new FormControl<string|null>(null, [Validators.required]),
       // TODO: Dice format validation
-      toHit: new FormControl<string|null>(null, [Validators.required]),
-      damage: new FormControl<string|null>(null, [Validators.required]),
+      toHit: new FormControl<string|null>(null, [Validators.required, this.diceFormulaValidator()]),
+      damage: new FormControl<string|null>(null, [Validators.required, this.diceFormulaValidator()]),
     });
   }
 
@@ -43,10 +43,27 @@ export class MainPopoverComponent implements OnInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
   }
 
+  private diceFormulaValidator(): ValidatorFn {
+    return (control: AbstractControl<string>): ValidationErrors | null => 
+      control.value && this.drollService.validate(control.value) ? null : {
+        invalidFormula: {value: control.value}
+      };
+  }
   makeNewAction() {
     if (this.newActionForm.invalid) {
       return;
     }
+
+    const toHitFormula = this.newActionForm.controls['toHit'].value;
+    const damageFormula = this.newActionForm.controls['damage'].value;
+
+    if(!this.drollService.validate(toHitFormula) || !this.drollService.validate(damageFormula)) {
+      console.log('invalid');
+      return;
+    }
+
+    console.dir(this.drollService.parse(toHitFormula));
+    console.dir(this.drollService.parse(damageFormula));
 
     this.actions.push(this.newActionForm.value);
     this.newActionForm.reset();
