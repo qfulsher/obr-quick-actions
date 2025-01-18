@@ -2,9 +2,9 @@
 
 <article *ngFor="let action of actions">
   <h2>{{action.name}}</h2>
-  <p>To Hit: {{action.toHit}}</p>
-  <p>Damage: {{action.damage}}</p>
-  <button>Delete</button>
+  <p>To Hit: <a href="javascript:;" (click)="roll(action.toHit)">{{action.toHit}}</a></p>
+  <p>Damage: <a href="javascript:;" (click)="roll(action.damage)">{{action.damage}}</a></p>
+  <button (click)="deleteAction(action)">Delete</button>
 </article>
 
 <details>

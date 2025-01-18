@@ -3,6 +3,7 @@ import { DrollService } from '../../utils/droll.service';
 import { CommonModule } from '@angular/common';
 import { AbstractControl, FormControl, FormGroup, ReactiveFormsModule, ValidationErrors, ValidatorFn, Validators } from '@angular/forms';
 import { Subscription } from 'rxjs';
+import OBR from '@owlbear-rodeo/sdk';
 
 const ID = "com.obr-quick-actions";
 
@@ -18,14 +19,19 @@ export class MainPopoverComponent implements OnInit, OnDestroy {
   toHitInvalid = signal<boolean|null>(null);
   damageInvalid = signal<boolean|null>(null);
 
-  actions: Action[] = [];
+  rollNotificationId: string|undefined;
+
+  actions: Action[] = [{
+    name: 'Attack',
+    toHit: '1d20',
+    damage: '1d6'
+  }];
 
   subscriptions: Subscription[] = [];
   
   constructor(private drollService: DrollService) {
     this.newActionForm = new FormGroup({
       name: new FormControl<string|null>(null, [Validators.required]),
-      // TODO: Dice format validation
       toHit: new FormControl<string|null>(null, [Validators.required, this.diceFormulaValidator()]),
       damage: new FormControl<string|null>(null, [Validators.required, this.diceFormulaValidator()]),
     });
@@ -49,6 +55,30 @@ export class MainPopoverComponent implements OnInit, OnDestroy {
         invalidFormula: {value: control.value}
       };
   }
+
+  async roll(formula: string): Promise<void> {    
+    const result = this.drollService.roll(formula);
+    console.dir(result);
+
+    await this.dismissNotification();
+    
+    this.rollNotificationId = await OBR.notification.show(`Result: ${result}`);
+    
+    setTimeout(() => this.dismissNotification(), 10_000);
+  }
+
+  async dismissNotification() {
+    if (!this.rollNotificationId) {
+      return;
+    }
+
+    try {
+      await OBR.notification.close(this.rollNotificationId);
+    } finally {
+      this.rollNotificationId = undefined;
+    }
+  }
+
   makeNewAction() {
     if (this.newActionForm.invalid) {
       return;
@@ -67,6 +97,10 @@ export class MainPopoverComponent implements OnInit, OnDestroy {
 
     this.actions.push(this.newActionForm.value);
     this.newActionForm.reset();
+  }
+
+  deleteAction(action: Action) {
+    this.actions = this.actions.filter(a => a !== action);
   }
 }
 
